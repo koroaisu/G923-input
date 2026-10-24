@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: configure",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--preset", "mingw-debug"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: build",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "--preset", "mingw-debug"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "CMake: configure",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "G923: run (UTF-8)",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "chcp 65001 > $null; & './build/g923-input.exe'; exit $LASTEXITCODE"
+            ],
+            "options": { "cwd": "${workspaceFolder}" },
+            "dependsOn": "CMake: build",
+            "presentation": { "focus": true, "panel": "dedicated" },
+            "problemMatcher": []
+        }
+    ]
+}

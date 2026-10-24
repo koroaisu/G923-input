@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <dinput.h>
 #include <iostream>
+#include <conio.h>
+#include <iomanip>
 
 
 // DirectInputが機器を見つけたときに呼ぶ関数。
@@ -83,11 +85,18 @@ int main() {
     
     DIJOYSTATE2 state{};// 読み取った軸やボタンの状態の保存先。
     
-    for (int i = 0; i < 100; ++i) {// 約5秒間、入力の読み取りと表示を繰り返す。
+    std::cout << "qキーで終了します。" << std::endl;
+
+    while (true) {// qキーが押されるまで、入力の読み取りと表示を繰り返す。
+        // キー入力がある場合だけ1文字読み、qならループを抜ける。
+        if (_kbhit() && _getch() == 'q') {
+            break;
+        }
+
         // 機器に入力状態の更新を要求する。
         result = controller->Poll();
         if (FAILED(result)) {
-            std::cerr << "コントローラーのポーリングに失敗しました。HRESULT: " << std::hex << result << std::endl;
+            std::cerr << "\nコントローラーのポーリングに失敗しました。HRESULT: " << std::hex << result << std::endl;
             controller->Release();
             directInput->Release();
             return 1;
@@ -96,22 +105,24 @@ int main() {
         // 現在の入力状態をstateに書き込む。
         result = controller->GetDeviceState(sizeof(state), &state);
         if (FAILED(result)) {
-            std::cerr << "コントローラーの状態取得に失敗しました。HRESULT: " << std::hex << result << std::endl;
+            std::cerr << "\nコントローラーの状態取得に失敗しました。HRESULT: " << std::hex << result << std::endl;
             controller->Release();
             directInput->Release();
             return 1;
         }else {
             // このG923で操作して確認した、ハンドルと各ペダルの軸を表示する。
-            std::cout << "X: " << state.lX // ハンドル：左端0 → 右端65535
-            << " Y: " << state.lY// アクセル：離すと65535、踏み切ると0
-            << " RZ: " << state.lRz// ブレーキ：離すと65535、踏み切ると0
-            << " rglSlider[0]: " << state.rglSlider[0]// クラッチ：離すと65535、踏み切ると0
-
-            << std::endl;
+            // 行頭に戻り、各数値を5文字幅で上書きする。改行せずに表示を反映する。
+            std::cout << '\r'
+            << "X: " << std::setw(5) << state.lX // ハンドル：左端0 → 右端65535
+            << " Y: " << std::setw(5) << state.lY// アクセル：離すと65535、踏み切ると0
+            << " RZ: " << std::setw(5) << state.lRz// ブレーキ：離すと65535、踏み切ると0
+            << " Clutch: " << std::setw(5) << state.rglSlider[0]// クラッチ：離すと65535、踏み切ると0
+            << std::flush;
         }
 
         Sleep(50);// 次の読み取りまで50ミリ秒待つ。
     }
+    std::cout << std::endl;
     
 
     // 入力取得の利用を終了する。
